@@ -14,6 +14,22 @@ impl Color {
     pub fn new(red: f64, green: f64, blue: f64) -> Self {
         Color { red, green, blue }
     }
+
+    pub fn new_from_u8(red: u8, green: u8, blue: u8) -> Self {
+        Color {
+            red: red as f64 / 255.0,
+            green: green as f64 / 255.0,
+            blue: blue as f64 / 255.0,
+        }
+    }
+
+    pub fn to_rbg_string(&self) -> [String; 3] {
+        [
+            format!("{} ", (self.red.clamp(0.0, 1.0) * 256.0) as u8),
+            format!("{} ", (self.green.clamp(0.0, 1.0) * 256.0) as u8),
+            format!("{} ", (self.blue.clamp(0.0, 1.0) * 256.0) as u8),
+        ]
+    }
 }
 
 impl Add for Color {
