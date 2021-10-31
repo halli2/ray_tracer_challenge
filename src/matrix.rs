@@ -88,6 +88,56 @@ impl Matrix {
         }
         Some(inverse_matrix)
     }
+
+    // TRANSFORMATION SPECIFIC METHODS
+    pub fn translation(x: f64, y: f64, z: f64) -> Self {
+        Matrix::new([
+            [1.0, 0.0, 0.0, x],
+            [0.0, 1.0, 0.0, y],
+            [0.0, 0.0, 1.0, z],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+    pub fn scaling(x: f64, y: f64, z: f64) -> Self {
+        Matrix::new([
+            [x, 0.0, 0.0, 0.0],
+            [0.0, y, 0.0, 0.0],
+            [0.0, 0.0, z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+    pub fn rotate_x(r: f64) -> Self {
+        Self::new([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, r.cos(), -r.sin(), 0.0],
+            [0.0, r.sin(), r.cos(), 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+    pub fn rotate_y(r: f64) -> Self {
+        Self::new([
+            [r.cos(), 0.0, r.sin(), 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [-r.sin(), 0.0, r.cos(), 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+    pub fn rotate_z(r: f64) -> Self {
+        Self::new([
+            [r.cos(), -r.sin(), 0.0, 0.0],
+            [r.sin(), r.cos(), 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+    fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Self::new([
+            [1.0, xy, xz, 0.0],
+            [yx, 1.0, yz, 0.0],
+            [zx, zy, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
 }
 
 impl Index<usize> for Matrix {
@@ -139,11 +189,11 @@ impl Mul<Vector> for Matrix {
 
     fn mul(self, rhs: Vector) -> Vector {
         let x =
-            (self[0][0] * rhs.x) + (self[0][1] * rhs.y) + (self[0][2] * rhs.z) + (self[0][3] * 1.0);
+            (self[0][0] * rhs.x) + (self[0][1] * rhs.y) + (self[0][2] * rhs.z) + (self[0][3] * 0.0);
         let y =
-            (self[1][0] * rhs.x) + (self[1][1] * rhs.y) + (self[1][2] * rhs.z) + (self[1][3] * 1.0);
+            (self[1][0] * rhs.x) + (self[1][1] * rhs.y) + (self[1][2] * rhs.z) + (self[1][3] * 0.0);
         let z =
-            (self[2][0] * rhs.x) + (self[2][1] * rhs.y) + (self[2][2] * rhs.z) + (self[2][3] * 1.0);
+            (self[2][0] * rhs.x) + (self[2][1] * rhs.y) + (self[2][2] * rhs.z) + (self[2][3] * 0.0);
         Vector::new(x, y, z)
     }
 }
@@ -492,5 +542,132 @@ mod matrix_tests {
         ]);
         let c = a * b;
         assert_eq!(c * b.inverse(4).unwrap(), a);
+    }
+}
+#[cfg(test)]
+mod transformation_matrix_tests {
+    use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
+
+    use super::*;
+    #[test]
+    fn multiple_by_translation_matrix() {
+        let transform = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Point::new(-3.0, 4.0, 5.0);
+        assert_eq!(transform * p, Point::new(2.0, 1.0, 7.0));
+    }
+    #[test]
+    fn multiple_by_inverse_translation_matrix() {
+        let transform = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Point::new(-3.0, 4.0, 5.0);
+        assert_eq!(
+            transform.inverse(4).unwrap() * p,
+            Point::new(-8.0, 7.0, 3.0)
+        );
+    }
+    #[test]
+    fn translation_does_not_affect_vectors() {
+        let transform = Matrix::translation(5.0, -3.0, 2.0);
+        let v = Vector::new(-3.0, 4.0, 5.0);
+        assert_eq!(transform * v, v);
+    }
+    #[test]
+    fn scaling_matrix_applied_point() {
+        let transform = Matrix::scaling(2.0, 3.0, 4.0);
+        let p = Point::new(-4.0, 6.0, 8.0);
+        assert_eq!(transform * p, Point::new(-8.0, 18.0, 32.0));
+    }
+    #[test]
+    fn scaling_matrix_applied_vector() {
+        let transform = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Vector::new(-4.0, 6.0, 8.0);
+        assert_eq!(transform * v, Vector::new(-8.0, 18.0, 32.0));
+    }
+    #[test]
+    fn multiplying_inverse_scaling() {
+        let transform = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Vector::new(-4.0, 6.0, 8.0);
+        assert_eq!(
+            transform.inverse(4).unwrap() * v,
+            Vector::new(-2.0, 2.0, 2.0)
+        );
+    }
+    #[test]
+    fn reflection_is_scaling_negative() {
+        let transform = Matrix::scaling(-1.0, 1.0, 1.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+        assert_eq!(transform * p, Point::new(-2.0, 3.0, 4.0));
+    }
+    #[test]
+    fn rotate_around_x() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotate_x(FRAC_PI_4);
+        let full_quarter = Matrix::rotate_x(FRAC_PI_2);
+        assert_eq!(
+            half_quarter * p,
+            Point::new(0.0, 2_f64.sqrt() / 2.0, 2_f64.sqrt() / 2.0)
+        );
+        assert_eq!(full_quarter * p, Point::new(0.0, 0.0, 1.0));
+    }
+    #[test]
+    fn rotate_around_x_inverse() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotate_x(FRAC_PI_4);
+        assert_eq!(
+            half_quarter.inverse(4).unwrap() * p,
+            Point::new(0.0, 2_f64.sqrt() / 2.0, -(2_f64.sqrt() / 2.0))
+        );
+    }
+    #[test]
+    fn rotate_around_y() {
+        let p = Point::new(0.0, 0.0, 1.0);
+        let half_quarter = Matrix::rotate_y(FRAC_PI_4);
+        let full_quarter = Matrix::rotate_y(FRAC_PI_2);
+        assert_eq!(
+            half_quarter * p,
+            Point::new(2_f64.sqrt() / 2.0, 0.0, 2_f64.sqrt() / 2.0)
+        );
+        assert_eq!(full_quarter * p, Point::new(1.0, 0.0, 0.0));
+    }
+    #[test]
+    fn rotate_around_z() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotate_z(FRAC_PI_4);
+        let full_quarter = Matrix::rotate_z(FRAC_PI_2);
+        assert_eq!(
+            half_quarter * p,
+            Point::new(-(2_f64.sqrt() / 2.0), 2_f64.sqrt() / 2.0, 0.0)
+        );
+        assert_eq!(full_quarter * p, Point::new(-1.0, 0.0, 0.0));
+    }
+    #[test]
+    fn shearing() {
+        let p = Point::new(2.0, 3.0, 4.0);
+        let t1 = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let t2 = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let t3 = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let t4 = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let t5 = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let t6 = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        assert_eq!(t1 * p, Point::new(5.0, 3.0, 4.0));
+        assert_eq!(t2 * p, Point::new(6.0, 3.0, 4.0));
+        assert_eq!(t3 * p, Point::new(2.0, 5.0, 4.0));
+        assert_eq!(t4 * p, Point::new(2.0, 7.0, 4.0));
+        assert_eq!(t5 * p, Point::new(2.0, 3.0, 6.0));
+        assert_eq!(t6 * p, Point::new(2.0, 3.0, 7.0));
+    }
+    #[test]
+    fn transformations_in_sequence() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let a = Matrix::rotate_x(FRAC_PI_2);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+        let p2 = a * p;
+        assert_eq!(p2, Point::new(1.0, -1.0, 0.0));
+        let p3 = b * p2;
+        assert_eq!(p3, Point::new(5.0, -5.0, 0.0));
+        let p4 = c * p3;
+        assert_eq!(p4, Point::new(15.0, 0.0, 7.0));
+
+        assert_eq!(c * b * a * p, Point::new(15.0, 0.0, 7.0));
     }
 }

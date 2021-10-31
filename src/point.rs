@@ -126,9 +126,9 @@ impl fmt::Display for Point {
 
 impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
-        ((self.x - other.x).abs() < f64::EPSILON)
-            & ((self.y - other.y).abs() < f64::EPSILON)
-            & ((self.z - other.z).abs() < f64::EPSILON)
+        ((self.x - other.x).abs() < f64::EPSILON * 100.0)
+            & ((self.y - other.y).abs() < f64::EPSILON * 100.0)
+            & ((self.z - other.z).abs() < f64::EPSILON * 100.0)
     }
 }
 

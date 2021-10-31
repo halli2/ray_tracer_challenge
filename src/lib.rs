@@ -4,6 +4,8 @@ pub mod matrix;
 pub mod point;
 pub mod vector;
 
+pub use crate::canvas::Canvas;
+pub use crate::matrix::Matrix;
 pub use crate::point::Point;
 pub use crate::vector::Vector;
 
