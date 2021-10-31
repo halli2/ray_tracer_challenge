@@ -1,5 +1,5 @@
 use ray_tracer_challenge::{canvas::Canvas, color::Color, point::Point, vector::Vector};
-use std::{fs::File, io::Write, thread::sleep, time::Duration};
+use std::{fs::File, io::Write};
 
 #[derive(Debug)]
 struct Projectile {
