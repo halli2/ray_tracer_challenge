@@ -25,3 +25,24 @@ right: `{}`
     );
     false
 }
+pub fn float_eq(left: &f64, right: &f64) -> bool {
+    (left - right).abs() < f64::EPSILON * 100.0
+}
+
+#[macro_export]
+macro_rules! assert_eq_f64 {
+    ($left:expr, $right:expr $(,)?) => {{
+        match (&$left, &$right) {
+            (left_val, right_val) => {
+                if !$crate::float_eq(&$left, &$right) {
+                    panic!(
+                        "assertion failed: `(left == right)`
+left: `{}`,
+rigth: `{}`",
+                        &*left_val, &*right_val
+                    );
+                }
+            }
+        }
+    }};
+}

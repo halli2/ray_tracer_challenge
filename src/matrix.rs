@@ -332,10 +332,8 @@ mod matrix_tests {
             [8.0, 6.0, 4.0, 1.0],
             [0.0, 0.0, 0.0, 1.0],
         ]);
-        let v = Vector::new(1.0, 2.0, 3.0);
         let p = Point::new(1.0, 2.0, 3.0);
 
-        assert_eq!(m * v, Vector::new(18.0, 24.0, 33.0));
         assert_eq!(m * p, Point::new(18.0, 24.0, 33.0));
     }
 
@@ -548,6 +546,8 @@ mod matrix_tests {
 mod transformation_matrix_tests {
     use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 
+    use crate::assert_eq_f64;
+
     use super::*;
     #[test]
     fn multiple_by_translation_matrix() {
@@ -669,5 +669,6 @@ mod transformation_matrix_tests {
         assert_eq!(p4, Point::new(15.0, 0.0, 7.0));
 
         assert_eq!(c * b * a * p, Point::new(15.0, 0.0, 7.0));
+        assert_eq_f64!(12.0000000000001, 12.0000000000001);
     }
 }
